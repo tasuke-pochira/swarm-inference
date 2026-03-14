@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swarm-coordinator
+  namespace: swarm-inference
+  labels:
+    app: swarm-inference
+    component: coordinator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: swarm-inference
+      component: coordinator
+  template:
+    metadata:
+      labels:
+        app: swarm-inference
+        component: coordinator
+    spec:
+      serviceAccountName: swarm-inference-sa
+      containers:
+      - name: coordinator
+        image: swarm-inference:latest
+        command: ["./swarm_inference"]
+        args: ["coordinator", "--first-node", "swarm-nodes-0.swarm-nodes.swarm-inference.svc.cluster.local:8080", "--listen", "0.0.0.0:8080", "--prompt", "Hello from Kubernetes"]
+        ports:
+        - containerPort: 8080
+          name: coordinator
+          protocol: TCP
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+          readOnly: true
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        env:
+        - name: RUST_LOG
+          value: "info"
+      volumes:
+      - name: config
+        configMap:
+          name: swarm-inference-config

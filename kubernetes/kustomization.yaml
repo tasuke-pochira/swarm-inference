@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: swarm-inference
+
+namespace: swarm-inference
+
+commonLabels:
+  app: swarm-inference
+
+images:
+- name: swarm-inference
+  newTag: latest
+
+resources:
+- namespace.yaml
+- rbac.yaml
+- configmap.yaml
+- services.yaml
+- coordinator-deployment.yaml
+- nodes-statefulset.yaml
+- dashboard-deployment.yaml
+- ingress.yaml
+- hpa.yaml
+- pdb.yaml
+- network-policy.yaml
+
+configMapGenerator:
+- name: swarm-inference-config
+  behavior: replace
+  files:
+  - config.yaml
+
+patchesStrategicMerge: []
+
+patchesJson6902: []
+
+vars: []

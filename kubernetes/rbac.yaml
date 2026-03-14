@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: swarm-inference-sa
+  namespace: swarm-inference
+  labels:
+    app: swarm-inference
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: swarm-inference-role
+  labels:
+    app: swarm-inference
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets", "replicasets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create", "patch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: swarm-inference-binding
+  labels:
+    app: swarm-inference
+subjects:
+- kind: ServiceAccount
+  name: swarm-inference-sa
+  namespace: swarm-inference
+roleRef:
+  kind: ClusterRole
+  name: swarm-inference-role
+  apiGroup: rbac.authorization.k8s.io

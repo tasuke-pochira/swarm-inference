@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swarm-dashboard
+  namespace: swarm-inference
+  labels:
+    app: swarm-inference
+    component: dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: swarm-inference
+      component: dashboard
+  template:
+    metadata:
+      labels:
+        app: swarm-inference
+        component: dashboard
+    spec:
+      serviceAccountName: swarm-inference-sa
+      containers:
+      - name: dashboard
+        image: swarm-inference:latest
+        command: ["./swarm_inference"]
+        args: ["dashboard", "--addr", "0.0.0.0:9090"]
+        ports:
+        - containerPort: 9090
+          name: dashboard
+          protocol: TCP
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+          readOnly: true
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 9090
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        env:
+        - name: RUST_LOG
+          value: "info"
+      volumes:
+      - name: config
+        configMap:
+          name: swarm-inference-config

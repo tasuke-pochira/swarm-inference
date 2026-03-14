@@ -1,0 +1,77 @@
+.version 7.0
+.target sm_30
+.address_size 64
+
+.visible .entry matmul_vector(
+    .param .u64 weights_ptr,
+    .param .u64 input_ptr,
+    .param .u64 bias_ptr,
+    .param .u64 output_ptr,
+    .param .s32 in_dim,
+    .param .s32 out_dim
+)
+{
+    .reg .u32 tid, i;
+    .reg .u64 weights_addr, input_addr, bias_addr, output_addr;
+    .reg .f32 sum, weight_val, input_val, bias_val;
+
+    // Get thread ID (output element index)
+    mov.u32 tid, %tid.x;
+
+    // Load parameters
+    ld.param.u64 weights_addr, [weights_ptr];
+    ld.param.u64 input_addr, [input_ptr];
+    ld.param.u64 bias_addr, [bias_ptr];
+    ld.param.u64 output_addr, [output_ptr];
+    ld.param.s32 %r1, [in_dim];  // in_dim
+    ld.param.s32 %r2, [out_dim]; // out_dim
+
+    // Check bounds
+    setp.ge.u32 %p1, tid, %r2;
+    @%p1 bra done;
+
+    // Initialize sum to 0
+    mov.f32 sum, 0.0;
+
+    // Loop over input dimension
+    mov.u32 i, 0;
+loop_start:
+    setp.ge.u32 %p2, i, %r1;
+    @%p2 bra loop_end;
+
+    // Load weight[threadIdx.x][i]
+    mul.wide.u32 %rd1, tid, %r1;  // row offset = tid * in_dim
+    add.u64 %rd2, %rd1, i;        // element offset = row_offset + i
+    mul.wide.u32 %rd3, %rd2, 4;  // byte offset = element_offset * 4 (float32)
+    add.u64 %rd4, weights_addr, %rd3;
+    ld.global.f32 weight_val, [%rd4];
+
+    // Load input[i]
+    mul.wide.u32 %rd5, i, 4;      // byte offset = i * 4
+    add.u64 %rd6, input_addr, %rd5;
+    ld.global.f32 input_val, [%rd6];
+
+    // Accumulate: sum += weight * input
+    fma.rn.f32 sum, weight_val, input_val, sum;
+
+    // Increment loop counter
+    add.u32 i, i, 1;
+    bra loop_start;
+
+loop_end:
+    // Load bias[threadIdx.x]
+    mul.wide.u32 %rd7, tid, 4;    // byte offset = tid * 4
+    add.u64 %rd8, bias_addr, %rd7;
+    ld.global.f32 bias_val, [%rd8];
+
+    // Add bias: sum += bias
+    add.f32 sum, sum, bias_val;
+
+    // Store result to output[threadIdx.x]
+    mul.wide.u32 %rd9, tid, 4;    // byte offset = tid * 4
+    add.u64 %rd10, output_addr, %rd9;
+    st.global.f32 [%rd10], sum;
+
+done:
+    ret;
+}

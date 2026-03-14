@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: swarm-inference-ingress
+  namespace: swarm-inference
+  labels:
+    app: swarm-inference
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"  # Optional: for TLS
+spec:
+  ingressClassName: nginx  # Adjust based on your ingress controller
+  tls:
+  - hosts:
+    - swarm-inference.example.com  # Replace with your domain
+    secretName: swarm-inference-tls
+  rules:
+  - host: swarm-inference.example.com  # Replace with your domain
+    http:
+      paths:
+      - path: /dashboard
+        pathType: Prefix
+        backend:
+          service:
+            name: swarm-dashboard
+            port:
+              number: 9090
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: swarm-coordinator
+            port:
+              number: 8080

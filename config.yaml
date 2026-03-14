@@ -1,0 +1,41 @@
+# Network configuration
+network:
+  listen_addr: "127.0.0.1:8080"
+  coordinator_addr: "127.0.0.1:8080"
+  connection_timeout_secs: 30
+  max_message_size: 10485760  # 10MB
+  cert_validity_days: 365
+
+# Performance and resource settings
+performance:
+  worker_threads: null  # null = use tokio default
+  max_memory_mb: null   # null = no limit
+  kv_cache_sync_interval_ms: 100
+  erasure_redundancy: 2
+  consensus_timeout_secs: 10
+
+# GPU and compute settings
+compute:
+  preferred_gpu: null   # null = auto-select
+  enable_cuda: false
+  max_concurrent_gpu_ops: 4
+  gpu_memory_pool_mb: 1024
+
+# Monitoring and observability
+monitoring:
+  enable_metrics: true
+  metrics_interval_secs: 30
+  dashboard_addr: "127.0.0.1:9090"
+  enable_tracing: true
+  tracing_level: "info"
+  alert_thresholds:
+    max_latency_ms: 1000
+    error_rate_threshold: 5.0
+    memory_usage_threshold: 90.0
+
+# Security settings
+security:
+  enable_tls: true
+  cert_file: null
+  key_file: null
+  auth_token: null

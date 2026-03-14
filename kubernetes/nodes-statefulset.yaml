@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: swarm-nodes
+  namespace: swarm-inference
+  labels:
+    app: swarm-inference
+    component: node
+spec:
+  serviceName: swarm-nodes
+  replicas: 3
+  selector:
+    matchLabels:
+      app: swarm-inference
+      component: node
+  template:
+    metadata:
+      labels:
+        app: swarm-inference
+        component: node
+    spec:
+      serviceAccountName: swarm-inference-sa
+      containers:
+      - name: node
+        image: swarm-inference:latest
+        command: ["./swarm_inference"]
+        args:
+        - "node"
+        - "--addr"
+        - "0.0.0.0:8080"
+        - "--id"
+        - "$(NODE_ID)"
+        - "--coordinator"
+        - "swarm-coordinator.swarm-inference.svc.cluster.local:8080"
+        ports:
+        - containerPort: 8080
+          name: node
+          protocol: TCP
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+          readOnly: true
+        - name: model-storage
+          mountPath: /app/models
+        resources:
+          requests:
+            cpu: 1000m
+            memory: 2Gi
+          limits:
+            cpu: 4000m
+            memory: 8Gi
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        env:
+        - name: NODE_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: RUST_LOG
+          value: "info"
+        # GPU support (uncomment if GPU nodes are available)
+        # - name: NVIDIA_VISIBLE_DEVICES
+        #   value: "all"
+      volumes:
+      - name: config
+        configMap:
+          name: swarm-inference-config
+  volumeClaimTemplates:
+  - metadata:
+      name: model-storage
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 50Gi
+      storageClassName: standard

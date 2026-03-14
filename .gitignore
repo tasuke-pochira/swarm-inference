@@ -1,0 +1,17 @@
+/target
+**/*.rs.bk
+Cargo.lock
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary artifacts
+clippy_errors.txt
+test_output.txt
+
+# OS files
+.DS_Store
+Thumbs.db
