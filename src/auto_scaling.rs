@@ -145,7 +145,13 @@ impl AutoScaler {
         k8s_config: crate::config::KubernetesConfig,
     ) -> anyhow::Result<Self> {
         let k8s_client = if config.enabled {
-            Some(Client::try_default().await?)
+            match Client::try_default().await {
+                Ok(client) => Some(client),
+                Err(e) => {
+                    tracing::warn!("Could not initialize Kubernetes client (continuing in non-k8s mode): {}", e);
+                    None
+                }
+            }
         } else {
             None
         };
