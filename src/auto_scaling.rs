@@ -148,7 +148,10 @@ impl AutoScaler {
             match Client::try_default().await {
                 Ok(client) => Some(client),
                 Err(e) => {
-                    tracing::warn!("Could not initialize Kubernetes client (continuing in non-k8s mode): {}", e);
+                    tracing::warn!(
+                        "Could not initialize Kubernetes client (continuing in non-k8s mode): {}",
+                        e
+                    );
                     None
                 }
             }
