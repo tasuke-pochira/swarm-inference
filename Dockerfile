@@ -1,5 +1,5 @@
 # Use the official Rust image as the base image
-FROM rust:1.75-slim as builder
+FROM rust:1.85-slim as builder
 
 # Set the working directory
 WORKDIR /app
