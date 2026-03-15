@@ -1,5 +1,5 @@
 # Use the official Rust image as the base image
-FROM rust:1.85-slim as builder
+FROM rust:latest as builder
 
 # Set the working directory
 WORKDIR /app
@@ -9,6 +9,10 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     pkg-config \
     libssl-dev \
+    cmake \
+    clang \
+    libclang-dev \
+    libudev-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the Cargo.toml and Cargo.lock files
