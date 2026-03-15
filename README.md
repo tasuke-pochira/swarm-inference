@@ -2,29 +2,24 @@
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/tasuke-pochira/swarm-inference/ci.yml?style=for-the-badge)](https://github.com/tasuke-pochira/swarm-inference/actions)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg?style=for-the-badge)](LICENSE)
-[![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg?style=for-the-badge)](https://www.rust-lang.org/)
+[![Rust](https://img.shields.io/badge/rust-2024-orange.svg?style=for-the-badge)](https://www.rust-lang.org/)
 [![Performance](https://img.shields.io/badge/latency-ultra--low-green?style=for-the-badge)](docs/performance.md)
 
 **Swarm Inference** is a high-performance, distributed, and fault-tolerant AI inference protocol designed for the decentralized era. It leverages swarm intelligence and peer-to-peer coordination to execute large-scale AI models across heterogeneous clusters of GPUs and CPUs.
 
-## 🌟 Why Swarm Inference?
+## 🌟 Key Pillars
 
-Traditional inference stacks are centralized and brittle. Swarm Inference provides a resilient, peer-to-peer alternative that excels in:
+Traditional inference stacks are centralized and brittle. Swarm Inference provides a resilient, peer-to-peer alternative:
 
-*   **Elastic Scaling**: Automatically grows and shrinks the cluster based on demand.
-*   **Zero-Trust Security**: Native TLS 1.3, mutual authentication, and comprehensive audit logging.
-*   **extreme Fault Tolerance**: Reed-Solomon erasure coding keeps the swarm alive even when nodes vanish.
-*   **Hardware Heterogeneity**: Seamlessly orchestrates workloads across mixed NVIDIA, AMD, and CPU-only nodes.
+- **⚡ Performance Without Bottlenecks**: Multi-stream QUIC communication via `quinn` ensures low-latency token delivery across the swarm.
+- **🛡️ Extreme Fault Tolerance**: Distributed KV-cache protected by Reed-Solomon erasure coding. The swarm survives even when nodes vanish.
+- **📈 Intelligent Scaling**: Predictive auto-scaling that anticipates load by monitoring queue depths and hardware telemetry.
+- **🔐 Zero-Trust Foundation**: Native TLS 1.3, mutual mTLS authentication, and comprehensive audit logging for every inference step.
+- **🌐 Hardware Fluidity**: Seamlessly orchestrates workloads across mixed NVIDIA (CUDA), AMD, and CPU-only nodes.
 
-## 🚀 Core Features
+## 🏗️ Architecture
 
-- **🌐 P2P Coordination**: No central bottleneck. Nodes coordinate via a high-performance consensus layer.
-- **⚡ QUIC-Powered**: Built on top of `quinn` for multi-stream, low-latency communication.
-- **🛡️ Erasure Coded Cache**: Distributed KV-cache protected by redundancy shards.
-- **📈 Advanced Auto-scaling**: Predictive scaling based on queue depth and hardware telemetry.
-- **📊 Real-time Observability**: Built-in dashboard and metrics for cluster-wide health monitoring.
-
-## 🏗️ Architecture at a Glance
+Swarm Inference uses a peer-to-peer mesh architecture where any node can act as a coordinator or a worker, depending on the swarm's needs.
 
 ```mermaid
 graph TD
@@ -42,61 +37,48 @@ graph TD
 
 ## 🛠️ Getting Started
 
-### Installation
+### 1. Installation
 
 ```bash
 cargo install swarm-inference
 ```
 
-### Quick Run (Development Mode)
+### 2. Launch the Coordinator
+The coordinator manages task distribution and swarm health.
 
 ```bash
-# Start the coordinator
 swarm_inference coordinator --port 8080
-
-# Join the swarm with a worker node
-swarm_inference node --coordinator 127.0.0.1:8080 --gpu-backend cuda
 ```
 
-## 📖 Further Reading
-
-*   **[Deployment Guide](docs/deployment.md)**: Production-ready setups.
-*   **[Architecture Deep-Dive](docs/architecture.md)**: How the swarm works.
-*   **[API Reference](docs/api.md)**: REST and WebSocket specs.
-*   **[Roadmap](github_launch_roadmap.md)**: Our path to 1.0.
-
-## 🤝 Contributing
-
-We welcome contributions of all kinds! Check out our [Contributing Guide](CONTRIBUTING.md) to get started.
-
-## 👥 Credits
-
-**Swarm Inference** is developed and maintained by **Tasuke Pochira**, an independent developer passionate about decentralized AI infrastructure.
-
-## 📄 License
-
-Distributed under the Apache 2.0 License. See `LICENSE` for more information.
-```
-
-### Metrics
+### 3. Join the Swarm
+Start worker nodes and point them to your coordinator.
 
 ```bash
-./target/release/swarm_inference metrics
+swarm_inference node --id 1 --coordinator 127.0.0.1:8080 --gpu-backend cuda
 ```
 
-### Dashboard
+## 🎮 Usage & Observability
+
+### Real-time Dashboard
+Monitor your swarm's health, latency, and throughput via the built-in observability dashboard.
 
 ```bash
-./target/release/swarm_inference dashboard --addr 127.0.0.1:9090
+# Start the dashboard on port 9090
+swarm_inference dashboard --addr 127.0.0.1:9090
 ```
 
-## Configuration
+### Live Metrics
+Expose Prometheus-compatible metrics for integration with Grafana or external monitoring.
 
-The system supports flexible configuration through defaults, config files, environment variables, and command-line overrides.
+```bash
+swarm_inference metrics
+```
 
-### Config File
+## ⚙️ Configuration
 
-Create a `config.yaml` file (see `config.yaml` for a complete example):
+Swarm Inference is highly configurable via YAML, environment variables, or CLI flags.
+
+### Configuration File (`config.yaml`)
 
 ```yaml
 network:
@@ -107,42 +89,39 @@ monitoring:
   tracing_level: "info"
 ```
 
-### Environment Variables
-
-Override any setting with `SWARM_` prefixed environment variables:
+### Environment Overrides
+Use the `SWARM_` prefix for any configuration key:
 
 ```bash
 export SWARM_NETWORK__LISTEN_ADDR="0.0.0.0:8080"
 export SWARM_MONITORING__TRACING_LEVEL="debug"
 ```
 
-### Command Line
+## 🚀 Roadmap & Status
 
-```bash
-# Use config file
-./target/release/swarm_inference --config config.yaml node --id 1
+Swarm Inference is currently in **Alpha (v0.1.0)**. 
 
-# Override with env vars
-SWARM_NETWORK__LISTEN_ADDR="0.0.0.0:8080" ./target/release/swarm_inference node --id 1
-```
+### Current Capabilities
+- ✅ **Distributed Consensus**: P2P protocol for inference result verification.
+- ✅ **Erasure Coding**: Protection against node failure during cache synchronization.
+- ✅ **Telemetry Pipeline**: Integrated logging, audit events, and metrics.
+- ✅ **Model Agnostic**: Infrastructure ready for any Candle-supported model.
 
-- **Network Latency**: Compression and efficient protocols
-- **Predictive Routing**: (Planned)
-- **Asynchronous KV-Cache Sync**: (Planned)
-- **Fault Tolerance**: Heartbeats and error handling
+### Upcoming Milestones
+- 🔄 **Predictive Routing**: Advanced algorithms for latency-minimized request routing.
+- 🔄 **Dynamic Sharding**: Real-time model shard redistribution based on node capacity.
+- 🔄 **WebUI Overhaul**: Next-gen dashboard with real-time swarm visualization.
 
-## Production Readiness Progress
+For a detailed view of our launch journey, see [Roadmap](github_launch_roadmap.md).
 
-See TODO.md for detailed roadmap. Key completed items:
-- ✅ Efficient tensor serialization with compression
-- ✅ Real model loading (Candle-based)
-- ✅ Heartbeat mechanisms
-- ✅ Comprehensive logging
-- ✅ Metrics collection
+## 🤝 Community & Legal
 
-## Future Work
+*   **[Documentation](docs/README.md)**: Explore the deeper [Architecture](docs/architecture.md) and [Deployment](docs/deployment.md) guides.
+*   **[Contributing](CONTRIBUTING.md)**: We welcome PRs! Read our [Code of Conduct](CODE_OF_CONDUCT.md) first.
+*   **[Security](SECURITY.md)**: Please report vulnerabilities responsibly.
 
-- Integrate real LLM models with Candle
-- Implement KV-cache synchronization
-- Add predictive routing algorithms
-- Enhance fault tolerance with node discovery and failover
+### Credits
+Developed and maintained by **Tasuke Pochira**, an independent developer building the future of decentralized AI infrastructure.
+
+### License
+This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
